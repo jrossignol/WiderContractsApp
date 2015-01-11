@@ -1,2 +1,2 @@
-WiderContractsApp 1.0.0
+Wider Contracts App 1.0.0
 - Initial release.
