@@ -1,2 +1,5 @@
+Wider Contracts App 1.0.1
+- Fixed NullReference in log on startup.
+
 Wider Contracts App 1.0.0
 - Initial release.

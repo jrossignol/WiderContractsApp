@@ -13,7 +13,9 @@ namespace WiderContractsApp
         const float RESIZE_FACTOR = 1.6f;
         void Start()
         {
-            if (ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>() == null)
+            if (ScreenSafeUI.referenceCam != null &&
+                ScreenSafeUI.referenceCam.gameObject != null &&
+                ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>() == null)
             {
                 ScreenSafeUI.referenceCam.gameObject.AddComponent<WiderContractsApp>();
 
