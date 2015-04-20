@@ -14,12 +14,23 @@ namespace WiderContractsApp
         void Start()
         {
             if (ScreenSafeUI.referenceCam != null &&
-                ScreenSafeUI.referenceCam.gameObject != null &&
-                ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>() == null)
+                ScreenSafeUI.referenceCam.gameObject != null)
             {
-                ScreenSafeUI.referenceCam.gameObject.AddComponent<WiderContractsApp>();
+                WiderContractsApp component = ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>();
+                if (component == null)
+                {
+                    ScreenSafeUI.referenceCam.gameObject.AddComponent<WiderContractsApp>();
 
-                // Destroy this object - otherwise we'll have two
+                    // Destroy this object - otherwise we'll have two
+                    Destroy(this);
+                }
+                else if (component != this)
+                {
+                    Destroy(this);
+                }
+            }
+            else
+            {
                 Destroy(this);
             }
         }
