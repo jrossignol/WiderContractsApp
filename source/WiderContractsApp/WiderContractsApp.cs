@@ -134,8 +134,16 @@ namespace WiderContractsApp
                 // Do a little hackery by using maxHeight to store "state"
                 if (appFrame.maxHeight == 476)
                 {
+                    Debug.Log("Handling the engineer's report");
+                    // Set the "state" as handled
                     appFrame.maxHeight = 477;
+
+                    // Need to reset the height to the proper one on first invokation
+                    appFrame.minHeight = 176;
+                    appFrame.gfxBg.height = 176;
                     appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
+                    appFrame.Reposition();
+                    //appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
                 }
             }
         }
