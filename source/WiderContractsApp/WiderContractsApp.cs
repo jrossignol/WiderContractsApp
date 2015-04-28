@@ -134,7 +134,6 @@ namespace WiderContractsApp
                 // Do a little hackery by using maxHeight to store "state"
                 if (appFrame.maxHeight == 476)
                 {
-                    Debug.Log("Handling the engineer's report");
                     // Set the "state" as handled
                     appFrame.maxHeight = 477;
 
