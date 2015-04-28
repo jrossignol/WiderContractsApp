@@ -10,6 +10,8 @@ namespace WiderContractsApp
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class WiderContractsApp : MonoBehaviour
     {
+        private static GenericAppFrame appFrame = null;
+
         const float RESIZE_FACTOR = 1.6f;
         void Start()
         {
@@ -37,28 +39,44 @@ namespace WiderContractsApp
 
         public void OnPreCull()
         {
-            if (ContractsApp.Instance != null)
+            // Try to find the cascading list in the contracts window.  Note that we may pick up
+            // the ones from the Engineer's report in the VAB/SPH instead.
+            if (appFrame == null || !appFrame.gameObject.activeSelf)
+            {
+                appFrame = UnityEngine.Object.FindObjectOfType<GenericAppFrame>();
+            }
+
+            if (appFrame != null && appFrame.header.text == "Contracts")
             {
                 // Set the background images to their new width
-                if (ContractsApp.Instance.gfxBg.width < 200)
+                if (appFrame.gfxBg.width < 200)
                 {
-                    ContractsApp.Instance.gfxBg.width *= RESIZE_FACTOR;
-                    ContractsApp.Instance.gfxHeader.width *= RESIZE_FACTOR;
-                    ContractsApp.Instance.gfxFooter.width *= RESIZE_FACTOR;
-                    ContractsApp.Instance.hoverComponent.width *= RESIZE_FACTOR;
+                    // Set the widths of graphics/buttons
+                    appFrame.gfxBg.width *= RESIZE_FACTOR;
+                    appFrame.gfxHeader.width *= RESIZE_FACTOR;
+                    appFrame.gfxFooter.width *= RESIZE_FACTOR;
+                    appFrame.hoverComponent.width *= RESIZE_FACTOR;
+
+                    // Don't limit max height
+                    appFrame.maxHeight = Screen.height;
+
+                    // Set the default size to something reasonable
+                    int oldMin = appFrame.minHeight;
+                    appFrame.minHeight = (int)(appFrame.minHeight * 2.5);
+                    appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
+                    appFrame.minHeight = oldMin;
+
+                    // Apply changes
+                    appFrame.Reposition();
+                    appFrame.gfxHeader.SetSize(appFrame.gfxHeader.width, appFrame.gfxHeader.height);
+                    appFrame.gfxBg.SetSize(appFrame.gfxBg.width, appFrame.gfxBg.height);
+                    appFrame.gfxFooter.SetSize(appFrame.gfxFooter.width, appFrame.gfxFooter.height);
                 }
 
                 // Deal with the list of contracts
-                UIScrollList list = ContractsApp.Instance.cascadingList.cascadingList;
+                UIScrollList list = appFrame.scrollList;
                 if (list != null)
                 {
-                    // Set the minimum height
-                    if (ContractsApp.Instance.minHeight < 200)
-                    {
-                        ContractsApp.Instance.minHeight = (int)(ContractsApp.Instance.minHeight * 2.5);
-                        ContractsApp.Instance.maxHeight = Screen.height;
-                    }
-
                     // Set the viewable area
                     if (list.viewableArea.x < 200)
                     {
@@ -108,6 +126,16 @@ namespace WiderContractsApp
 
                     // Fix up any heights we may have changed
                     list.RepositionItems();
+                }
+            }
+            // Engineer's report gets messed up (ends up too tall) if we resize the contracts window before it is displayed
+            else if (appFrame != null && appFrame.header.text == "Engineer's Report")
+            {
+                // Do a little hackery by using maxHeight to store "state"
+                if (appFrame.maxHeight == 476)
+                {
+                    appFrame.maxHeight = 477;
+                    appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
                 }
             }
         }
