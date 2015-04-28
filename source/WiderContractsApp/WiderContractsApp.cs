@@ -143,7 +143,6 @@ namespace WiderContractsApp
                     appFrame.gfxBg.height = 176;
                     appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
                     appFrame.Reposition();
-                    //appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
                 }
             }
         }
