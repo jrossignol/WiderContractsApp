@@ -1,3 +1,6 @@
+Wider Contracts App 1.1.2
+- Recompile for KSP 1.0.2 (for CKAN).
+
 Wider Contracts App 1.1.1
 - Fix Engineer's Report to display correctly (thanks SwGustav).
 
