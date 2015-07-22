@@ -77,6 +77,8 @@ namespace WiderContractsApp
                 UIScrollList list = appFrame.scrollList;
                 if (list != null)
                 {
+                    bool heightChanged = false;
+
                     // Set the viewable area
                     if (list.viewableArea.x < 200)
                     {
@@ -116,13 +118,21 @@ namespace WiderContractsApp
                                 }
 
                                 // Resize in the y dimension to match text
-                                btn.SetSize(btn.width, (richText.name == "labelRich" ? 9.0f : 5.0f) - richText.BottomRight.y);
+                                float h = (richText.name == "labelRich" ? 9.0f : 5.0f) - richText.BottomRight.y;
+                                if (btn.height != h)
+                                {
+                                    heightChanged = true;
+                                    btn.SetSize(btn.width, h);
+                                }
                             }
                         }
                     }
 
                     // Fix up any heights we may have changed
-                    list.RepositionItems();
+                    if (heightChanged)
+                    {
+                        list.RepositionItems();
+                    }
                 }
             }
             // Engineer's report gets messed up (ends up too tall) if we resize the contracts window before it is displayed
