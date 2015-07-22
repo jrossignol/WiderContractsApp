@@ -96,30 +96,27 @@ namespace WiderContractsApp
                         UIListItemContainer listObject = (UIListItemContainer)list.GetItem(i);
 
                         // Buttons for the contract header and text background
-                        BTButton[] btns = listObject.GetComponentsInChildren<BTButton>();
-                        foreach (BTButton btn in btns)
+                        BTButton btn = (listObject.GetElement("bg") ?? listObject.GetElement("button")) as BTButton;
+                        if (btn != null)
                         {
-                            if (btn != null)
+                            // Widen the button
+                            if (btn.width < 200)
                             {
-                                // Widen the button
-                                if (btn.width < 200)
+                                btn.SetSize(btn.width * RESIZE_FACTOR, btn.height);
+                            }
+
+                            // Find the associated text
+                            SpriteTextRich richText = listObject.GetRichTextElement(btn.name == "bg" ? "keyRich" : "labelRich");
+                            if (richText != null)
+                            {
+                                if (richText.maxWidth < 200)
                                 {
-                                    btn.SetSize(btn.width * RESIZE_FACTOR, btn.height);
+                                    richText.maxWidth *= RESIZE_FACTOR;
+                                    richText.UpdateMesh();
                                 }
 
-                                // Find the associated text
-                                SpriteTextRich richText = listObject.GetComponentInChildren<SpriteTextRich>();
-                                if (richText != null)
-                                {
-                                    if (richText.maxWidth < 200)
-                                    {
-                                        richText.maxWidth *= RESIZE_FACTOR;
-                                        richText.UpdateMesh();
-                                    }
-
-                                    // Resize in the y dimension to match text
-                                    btn.SetSize(btn.width, (richText.name == "labelRich" ? 9.0f : 5.0f) - richText.BottomRight.y);
-                                }
+                                // Resize in the y dimension to match text
+                                btn.SetSize(btn.width, (richText.name == "labelRich" ? 9.0f : 5.0f) - richText.BottomRight.y);
                             }
                         }
                     }
