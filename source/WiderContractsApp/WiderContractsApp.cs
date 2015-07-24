@@ -10,7 +10,8 @@ namespace WiderContractsApp
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class WiderContractsApp : MonoBehaviour
     {
-        private static GenericAppFrame appFrame = null;
+        private static GenericAppFrame contractsFrame = null;
+        private static GenericAppFrame engineerFrame = null;
 
         const float RESIZE_FACTOR = 1.6f;
         void Start()
@@ -41,40 +42,50 @@ namespace WiderContractsApp
         {
             // Try to find the cascading list in the contracts window.  Note that we may pick up
             // the ones from the Engineer's report in the VAB/SPH instead.
-            if (appFrame == null || !appFrame.gameObject.activeSelf)
+            if (contractsFrame == null)
             {
-                appFrame = UnityEngine.Object.FindObjectOfType<GenericAppFrame>();
+                foreach (GenericAppFrame appFrame in Resources.FindObjectsOfTypeAll<GenericAppFrame>())
+                {
+                    if (appFrame.header.text == "Contracts")
+                    {
+                        contractsFrame = appFrame;
+                    }
+                    else if (appFrame.header.text == "Engineer's Report")
+                    {
+                        engineerFrame = appFrame;
+                    }
+                }
             }
 
-            if (appFrame != null && appFrame.header.text == "Contracts")
+            if (contractsFrame != null)
             {
                 // Set the background images to their new width
-                if (appFrame.gfxBg.width < 200)
+                if (contractsFrame.gfxBg.width < 200)
                 {
                     // Set the widths of graphics/buttons
-                    appFrame.gfxBg.width *= RESIZE_FACTOR;
-                    appFrame.gfxHeader.width *= RESIZE_FACTOR;
-                    appFrame.gfxFooter.width *= RESIZE_FACTOR;
-                    appFrame.hoverComponent.width *= RESIZE_FACTOR;
+                    contractsFrame.gfxBg.width *= RESIZE_FACTOR;
+                    contractsFrame.gfxHeader.width *= RESIZE_FACTOR;
+                    contractsFrame.gfxFooter.width *= RESIZE_FACTOR;
+                    contractsFrame.hoverComponent.width *= RESIZE_FACTOR;
 
                     // Don't limit max height
-                    appFrame.maxHeight = Screen.height;
+                    contractsFrame.maxHeight = Screen.height;
 
                     // Set the default size to something reasonable
-                    int oldMin = appFrame.minHeight;
-                    appFrame.minHeight = (int)(appFrame.minHeight * 2.5);
-                    appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
-                    appFrame.minHeight = oldMin;
+                    int oldMin = contractsFrame.minHeight;
+                    contractsFrame.minHeight = (int)(contractsFrame.minHeight * 2.5);
+                    contractsFrame.UpdateDraggingBounds(contractsFrame.minHeight, -contractsFrame.minHeight);
+                    contractsFrame.minHeight = oldMin;
 
                     // Apply changes
-                    appFrame.Reposition();
-                    appFrame.gfxHeader.SetSize(appFrame.gfxHeader.width, appFrame.gfxHeader.height);
-                    appFrame.gfxBg.SetSize(appFrame.gfxBg.width, appFrame.gfxBg.height);
-                    appFrame.gfxFooter.SetSize(appFrame.gfxFooter.width, appFrame.gfxFooter.height);
+                    contractsFrame.Reposition();
+                    contractsFrame.gfxHeader.SetSize(contractsFrame.gfxHeader.width, contractsFrame.gfxHeader.height);
+                    contractsFrame.gfxBg.SetSize(contractsFrame.gfxBg.width, contractsFrame.gfxBg.height);
+                    contractsFrame.gfxFooter.SetSize(contractsFrame.gfxFooter.width, contractsFrame.gfxFooter.height);
                 }
 
                 // Deal with the list of contracts
-                UIScrollList list = appFrame.scrollList;
+                UIScrollList list = contractsFrame.scrollList;
                 if (list != null)
                 {
                     bool heightChanged = false;
@@ -135,20 +146,21 @@ namespace WiderContractsApp
                     }
                 }
             }
+
             // Engineer's report gets messed up (ends up too tall) if we resize the contracts window before it is displayed
-            else if (appFrame != null && appFrame.header.text == "Engineer's Report")
+            if (engineerFrame != null)
             {
                 // Do a little hackery by using maxHeight to store "state"
-                if (appFrame.maxHeight == 476)
+                if (engineerFrame.maxHeight == 476)
                 {
                     // Set the "state" as handled
-                    appFrame.maxHeight = 477;
+                    engineerFrame.maxHeight = 477;
 
                     // Need to reset the height to the proper one on first invokation
-                    appFrame.minHeight = 176;
-                    appFrame.gfxBg.height = 176;
-                    appFrame.UpdateDraggingBounds(appFrame.minHeight, -appFrame.minHeight);
-                    appFrame.Reposition();
+                    engineerFrame.minHeight = 176;
+                    engineerFrame.gfxBg.height = 176;
+                    engineerFrame.UpdateDraggingBounds(engineerFrame.minHeight, -engineerFrame.minHeight);
+                    engineerFrame.Reposition();
                 }
             }
         }
