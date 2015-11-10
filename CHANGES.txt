@@ -1,3 +1,6 @@
+Wider Contracts App 1.2.1
+- Recompile for KSP 1.0.5 (for CKAN).
+
 Wider Contracts App 1.2.0
 - All performance issues now fixed!
 
