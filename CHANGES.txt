@@ -1,3 +1,6 @@
+Wider Contracts App 1.2.2
+- Disable on scenes where there is no Contracts App.
+
 Wider Contracts App 1.2.1
 - Recompile for KSP 1.0.5 (for CKAN).
 

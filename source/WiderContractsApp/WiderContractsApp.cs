@@ -44,7 +44,15 @@ namespace WiderContractsApp
             // the ones from the Engineer's report in the VAB/SPH instead.
             if (contractsFrame == null)
             {
-                foreach (GenericAppFrame appFrame in Resources.FindObjectsOfTypeAll<GenericAppFrame>())
+                // Check if this scene even has a contracts app
+                IEnumerable<GenericAppFrame> frames = Resources.FindObjectsOfTypeAll<GenericAppFrame>();
+                if (!frames.Any())
+                {
+                    Destroy(this);
+                    return;
+                }
+
+                foreach (GenericAppFrame appFrame in frames)
                 {
                     if (appFrame.header.text == "Contracts")
                     {
