@@ -16,7 +16,16 @@ namespace WiderContractsApp
         const float RESIZE_FACTOR = 1.6f;
         void Start()
         {
-            if (ScreenSafeUI.referenceCam != null &&
+            // Check for the correct scenes
+            if (HighLogic.LoadedScene != GameScenes.EDITOR &&
+                HighLogic.LoadedScene != GameScenes.FLIGHT &&
+                HighLogic.LoadedScene != GameScenes.SPACECENTER &&
+                HighLogic.LoadedScene != GameScenes.TRACKSTATION)
+            {
+                Destroy(this);
+            }
+            // Check that we have a UI camera to attach to
+            else if (ScreenSafeUI.referenceCam != null &&
                 ScreenSafeUI.referenceCam.gameObject != null)
             {
                 WiderContractsApp component = ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>();
