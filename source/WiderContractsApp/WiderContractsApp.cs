@@ -24,7 +24,6 @@ namespace WiderContractsApp
         static FieldInfo transformField = typeof(GenericAppFrame).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(RectTransform)).First();
         static FieldInfo uiListPrefabField = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(UIListItem)).First();
         static IEnumerable<FieldInfo> cascadingListFields = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(GenericCascadingList));
-        static FieldInfo contractsField = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(Dictionary<Guid, UICascadingList.CascadingListItem>)).First();
         static MethodInfo refreshMethod = typeof(ContractsApp).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.Name == "CreateContractsList").First();
 
         const float RESIZE_FACTOR = 1.6f;
