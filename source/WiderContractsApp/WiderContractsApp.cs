@@ -1,19 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 using KSP;
+using KSP.UI;
+using KSP.UI.Screens;
 
 namespace WiderContractsApp
 {
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class WiderContractsApp : MonoBehaviour
     {
-        private static GenericAppFrame contractsFrame = null;
-        private static GenericAppFrame engineerFrame = null;
+        private GenericAppFrame contractsFrame = null;
+        private GenericAppFrame engineerFrame = null;
+
+        // Reflection fields we operate on
+        static IEnumerable<FieldInfo> intFields = typeof(GenericAppFrame).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(int));
+        static FieldInfo widthField = intFields.First();
+        static FieldInfo heightField = intFields.ElementAt(1);
+        static FieldInfo transformField = typeof(GenericAppFrame).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(RectTransform)).First();
+        static FieldInfo uiListPrefabField = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(UIListItem)).First();
+        static IEnumerable<FieldInfo> cascadingListFields = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.FieldType == typeof(GenericCascadingList));
+        static MethodInfo refreshMethod = typeof(ContractsApp).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Where(mi => mi.Name == "CreateContractsList").First();
 
         const float RESIZE_FACTOR = 1.6f;
+
         void Start()
         {
             // Check for the correct scenes
@@ -25,13 +39,14 @@ namespace WiderContractsApp
                 Destroy(this);
             }
             // Check that we have a UI camera to attach to
-            else if (ScreenSafeUI.referenceCam != null &&
-                ScreenSafeUI.referenceCam.gameObject != null)
+            else if (UIMainCamera.Camera &&
+                UIMainCamera.Camera.gameObject)
             {
-                WiderContractsApp component = ScreenSafeUI.referenceCam.gameObject.GetComponent<WiderContractsApp>();
+                WiderContractsApp component = UIMainCamera.Camera.gameObject.GetComponent<WiderContractsApp>();
                 if (component == null)
                 {
-                    ScreenSafeUI.referenceCam.gameObject.AddComponent<WiderContractsApp>();
+                    // Add to the UI camera so we get our PreCull call
+                    UIMainCamera.Camera.gameObject.AddComponent<WiderContractsApp>();
 
                     // Destroy this object - otherwise we'll have two
                     Destroy(this);
@@ -49,9 +64,9 @@ namespace WiderContractsApp
 
         public void OnPreCull()
         {
-            // Try to find the cascading list in the contracts window.  Note that we may pick up
-            // the ones from the Engineer's report in the VAB/SPH instead.
-            if (contractsFrame == null)
+            // Try to find the app frame for the contracts window.  Note that we may pick up
+            // the ones from the Engineer's report in the VAB/SPH instead, so check by name.
+            if (!contractsFrame)
             {
                 // Check if this scene even has a contracts app
                 IEnumerable<GenericAppFrame> frames = Resources.FindObjectsOfTypeAll<GenericAppFrame>();
@@ -74,111 +89,76 @@ namespace WiderContractsApp
                 }
             }
 
-            if (contractsFrame != null)
+            if (contractsFrame)
             {
-                // Set the background images to their new width
-                if (contractsFrame.gfxBg.width < 200)
+                Debug.Log("WiderContractsApp: Making adjustments to contract frame!");
+                
+                // Set the new width and height (old value * factor)
+                int width = (int)(166 * RESIZE_FACTOR);
+                int height = (int)(176 * 2.5);
+                widthField.SetValue(contractsFrame, width);
+
+                // Apply the changes
+                RectTransform rectTransform = (RectTransform) transformField.GetValue(contractsFrame);
+                rectTransform.sizeDelta = new Vector2((float)width, (float)height);
+
+                // Remove the limit on max height (technically should be a little less than screen height, but close enough)
+                contractsFrame.maxHeight = Screen.height;
+
+                // Apply the changes
+                contractsFrame.Reposition();
+
+                if (ContractsApp.Instance != null)
                 {
-                    // Set the widths of graphics/buttons
-                    contractsFrame.gfxBg.width *= RESIZE_FACTOR;
-                    contractsFrame.gfxHeader.width *= RESIZE_FACTOR;
-                    contractsFrame.gfxFooter.width *= RESIZE_FACTOR;
-                    contractsFrame.hoverComponent.width *= RESIZE_FACTOR;
-
-                    // Don't limit max height
-                    contractsFrame.maxHeight = Screen.height;
-
-                    // Set the default size to something reasonable
-                    int oldMin = contractsFrame.minHeight;
-                    contractsFrame.minHeight = (int)(contractsFrame.minHeight * 2.5);
-                    contractsFrame.UpdateDraggingBounds(contractsFrame.minHeight, -contractsFrame.minHeight);
-                    contractsFrame.minHeight = oldMin;
-
-                    // Apply changes
-                    contractsFrame.Reposition();
-                    contractsFrame.gfxHeader.SetSize(contractsFrame.gfxHeader.width, contractsFrame.gfxHeader.height);
-                    contractsFrame.gfxBg.SetSize(contractsFrame.gfxBg.width, contractsFrame.gfxBg.height);
-                    contractsFrame.gfxFooter.SetSize(contractsFrame.gfxFooter.width, contractsFrame.gfxFooter.height);
-                }
-
-                // Deal with the list of contracts
-                UIScrollList list = contractsFrame.scrollList;
-                if (list != null)
-                {
-                    bool heightChanged = false;
-
-                    // Set the viewable area
-                    if (list.viewableArea.x < 200)
+                    // Find the cascading list field
+                    foreach (FieldInfo cascadingListField in cascadingListFields)
                     {
-                        float shiftSize = list.viewableArea.x * (RESIZE_FACTOR - 1.0f) / 2.0f;
-                        list.SetupCameraAndSizes();
-                        list.viewableArea.x *= RESIZE_FACTOR;
-                        list.transform.Translate(new Vector3(shiftSize, 0.0f, 0.0f));
-
-                        // This should work - but doesn't!  It offsets the list of contracts to
-                        // the right by the amount we increased it by.  Need to figure out how to
-                        // fix the clipping rectangle without that side effect.
-                        list.SetViewableAreaPixelDimensions(list.renderCamera, (int)list.viewableArea.x, (int)list.viewableArea.y);
-                    }
-
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        UIListItemContainer listObject = (UIListItemContainer)list.GetItem(i);
-
-                        // Buttons for the contract header and text background
-                        BTButton btn = (listObject.GetElement("bg") ?? listObject.GetElement("button")) as BTButton;
-                        if (btn != null)
+                        GenericCascadingList ccl = (GenericCascadingList)cascadingListField.GetValue(ContractsApp.Instance);
+                        if (ccl != null)
                         {
-                            // Widen the button
-                            if (btn.width < 200)
-                            {
-                                btn.SetSize(btn.width * RESIZE_FACTOR, btn.height);
-                            }
+                            // Set the body width (I think this is used for word wrap logic)
+                            ccl.bodyTextStartWidth = (int)(166 * RESIZE_FACTOR - (166 - 151));
 
-                            // Find the associated text
-                            SpriteTextRich richText = listObject.GetRichTextElement(btn.name == "bg" ? "keyRich" : "labelRich");
-                            if (richText != null)
-                            {
-                                if (richText.maxWidth < 200)
-                                {
-                                    richText.maxWidth *= RESIZE_FACTOR;
-                                    richText.UpdateMesh();
-                                }
+                            // Fix the prefab for the header - will apply to any newly added contracts
+                            FixListItem(ccl.cascadeHeader);
 
-                                // Resize in the y dimension to match text
-                                float h = (richText.name == "labelRich" ? 9.0f : 5.0f) - richText.BottomRight.y;
-                                if (btn.height != h)
-                                {
-                                    heightChanged = true;
-                                    btn.SetSize(btn.width, h);
-                                }
-                            }
+                            // Fix the prefab for the body - used for contract notes
+                            FixListItem(ccl.cascadeBody);
                         }
                     }
 
-                    // Fix up any heights we may have changed
-                    if (heightChanged)
+                    // Fix the prefab used for contract parameters
+                    UIListItem uiListPrefab = (UIListItem)uiListPrefabField.GetValue(ContractsApp.Instance);
+                    Text text = uiListPrefab.GetComponentsInChildren<Text>(true).FirstOrDefault();
+                    if (text)
                     {
-                        list.RepositionItems();
+                        text.rectTransform.sizeDelta = new Vector2(166 * RESIZE_FACTOR - (166 - 163), 14.0f);
                     }
+
+                    // Refresh the contract list, forces everything to get recreated
+                    refreshMethod.Invoke(ContractsApp.Instance, new object[]{});
+
+                    // No need to hang around, the changes will stick for the lifetime of the app
+                    Destroy(this);
                 }
             }
 
-            // Engineer's report gets messed up (ends up too tall) if we resize the contracts window before it is displayed
-            if (engineerFrame != null)
+            // In the past we needed to do some stuff to prevent leakage to the Engineer's frame, but that's no longer needed.
+            // Keeping this around in case we need to do something with the engineer report in the future.
+            if (engineerFrame)
             {
-                // Do a little hackery by using maxHeight to store "state"
-                if (engineerFrame.maxHeight == 476)
-                {
-                    // Set the "state" as handled
-                    engineerFrame.maxHeight = 477;
+            }
+        }
 
-                    // Need to reset the height to the proper one on first invokation
-                    engineerFrame.minHeight = 176;
-                    engineerFrame.gfxBg.height = 176;
-                    engineerFrame.UpdateDraggingBounds(engineerFrame.minHeight, -engineerFrame.minHeight);
-                    engineerFrame.Reposition();
-                }
+        private void FixListItem(UIListItem item)
+        {
+            float width = 166 * RESIZE_FACTOR - (166 - 163);
+
+            // Resize the item
+            Text t = item.GetComponentsInChildren<Text>(true).FirstOrDefault();
+            if (t)
+            {
+                t.rectTransform.sizeDelta = new Vector2(width, t.rectTransform.sizeDelta.y);
             }
         }
     }
