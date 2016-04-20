@@ -91,12 +91,6 @@ namespace WiderContractsApp
                         engineerFrame = appFrame;
                     }
                 }
-
-                // Couldn't get a contracts frame, shouldn't happen
-                if (contractsFrame == null)
-                {
-                    Destroy(this);
-                }
             }
 
             if (contractsFrame)
@@ -151,6 +145,10 @@ namespace WiderContractsApp
                     // No need to hang around, the changes will stick for the lifetime of the app
                     Destroy(this);
                 }
+            }
+            else
+            {
+                Destroy(this);
             }
 
             // In the past we needed to do some stuff to prevent leakage to the Engineer's frame, but that's no longer needed.
