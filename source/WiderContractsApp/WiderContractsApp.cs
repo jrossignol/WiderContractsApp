@@ -38,9 +38,13 @@ namespace WiderContractsApp
             {
                 Destroy(this);
             }
+            // Check for the corect game mode
+            else if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER)
+            {
+                Destroy(this);
+            }
             // Check that we have a UI camera to attach to
-            else if (UIMainCamera.Camera &&
-                UIMainCamera.Camera.gameObject)
+            else if (UIMainCamera.Camera && UIMainCamera.Camera.gameObject)
             {
                 WiderContractsApp component = UIMainCamera.Camera.gameObject.GetComponent<WiderContractsApp>();
                 if (component == null)
@@ -86,6 +90,12 @@ namespace WiderContractsApp
                     {
                         engineerFrame = appFrame;
                     }
+                }
+
+                // Couldn't get a contracts frame, shouldn't happen
+                if (contractsFrame == null)
+                {
+                    Destroy(this);
                 }
             }
 
