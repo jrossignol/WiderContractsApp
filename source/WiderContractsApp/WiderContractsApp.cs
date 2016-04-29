@@ -146,10 +146,6 @@ namespace WiderContractsApp
                     Destroy(this);
                 }
             }
-            else
-            {
-                Destroy(this);
-            }
 
             // In the past we needed to do some stuff to prevent leakage to the Engineer's frame, but that's no longer needed.
             // Keeping this around in case we need to do something with the engineer report in the future.
